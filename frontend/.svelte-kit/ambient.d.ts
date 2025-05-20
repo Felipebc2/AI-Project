@@ -81,8 +81,8 @@ declare module '$env/static/private' {
 	export const NUMBER_OF_PROCESSORS: string;
 	export const OneDrive: string;
 	export const OneDriveConsumer: string;
-	export const OPENAI_API_KEY: string;
-	export const OPENAI_MODEL: string;
+	export const GEMINI_API_KEY: string;
+	export const GEMINI_MODEL: string;
 	export const OPENSSL_CONF: string;
 	export const ORIGINAL_XDG_CURRENT_DESKTOP: string;
 	export const OS: string;
@@ -213,8 +213,8 @@ declare module '$env/dynamic/private' {
 		NUMBER_OF_PROCESSORS: string;
 		OneDrive: string;
 		OneDriveConsumer: string;
-		OPENAI_API_KEY: string;
-		OPENAI_MODEL: string;
+		GEMINI_API_KEY: string;
+		GEMINI_MODEL: string;
 		OPENSSL_CONF: string;
 		ORIGINAL_XDG_CURRENT_DESKTOP: string;
 		OS: string;

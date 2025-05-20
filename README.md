@@ -124,11 +124,11 @@ Este arquivo é importado por outros módulos e não precisa ser executado diret
 pip install -r requirements.txt
 
 # Configurar variáveis de ambiente (.env)
-OPENAI_API_KEY=sua_chave_api_openai
+GEMINI_API_KEY=sua_chave_api_openai
 PINECONE_API_KEY=sua_chave_api_pinecone
 PINECONE_HOST=seu_host_pinecone
 PINECONE_INDEX_NAME=brito-ai
-OPENAI_MODEL=gpt-4o-mini  # Opcional, padrão é gpt-4o-mini
+GEMINI_MODEL=gemini-2.0-flash
 
 # Processar contratos existentes
 python processar_contrato.py
@@ -224,7 +224,7 @@ Alternativamente, use a API diretamente via endpoint POST `/llm/ask` com um JSON
 }
 ```
 
-O sistema utiliza o modelo configurado na variável de ambiente `OPENAI_MODEL` (padrão: gpt-4o-mini) para gerar respostas detalhadas com base nos contratos encontrados na busca semântica.
+O sistema utiliza o modelo configurado na variável de ambiente `GEMINI_MODEL` (padrão: gpt-4o-mini) para gerar respostas detalhadas com base nos contratos encontrados na busca semântica.
 
 ## Tecnologias
 

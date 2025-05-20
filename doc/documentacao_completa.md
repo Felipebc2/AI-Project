@@ -586,7 +586,7 @@ Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 
 ```
 # OpenAI
-OPENAI_API_KEY=sua_chave_api_openai
+GEMINI_API_KEY=sua_chave_api_openai
 
 # Pinecone
 PINECONE_API_KEY=sua_chave_api_pinecone
@@ -594,7 +594,7 @@ PINECONE_HOST=seu_host_pinecone
 PINECONE_INDEX_NAME=brito-ai
 
 # Configurações do LLM
-OPENAI_MODEL=gpt-4o-mini
+GEMINI_MODEL=gemini-2.0-flash
 ```
 
 #### 8.2.2 Instalação de Dependências do Backend

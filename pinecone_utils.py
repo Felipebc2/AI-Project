@@ -14,9 +14,9 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_HOST = os.getenv("PINECONE_HOST")
 INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "brito-ai")
 
-# Configurações da OpenAI
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+# Configurações da GEMINI
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+openai_client = OpenAI(api_key=GEMINI_API_KEY)
 EMBEDDING_MODEL = "text-embedding-3-small"
 
 def inicializar_pinecone():

@@ -7,7 +7,7 @@ import time
 from shared import buscar_contratos
 
 router = APIRouter()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.getenv("GEMINI_API_KEY"))
 
 class QuestionRequest(BaseModel):
     question: str
@@ -55,7 +55,7 @@ async def ask_question(request: QuestionRequest):
         )
 
         # 4. Geração da resposta com o LLM
-        modelo = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        modelo = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
         print(f"[LLM] Gerando resposta com o modelo {modelo}...")
         
         try:

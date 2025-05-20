@@ -7,7 +7,13 @@ import time
 from shared import buscar_contratos
 
 router = APIRouter()
-client = genai(api_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel(
+    model_name=os.getenv("GEMINI_MODEL"),
+    generation_config=genai.types.GenerationConfig(
+        temperature=0.5
+    )
+)
 
 class QuestionRequest(BaseModel):
     question: str
@@ -59,28 +65,21 @@ async def ask_question(request: QuestionRequest):
         print(f"[LLM] Gerando resposta com o modelo {modelo}...")
         
         try:
-            resposta_final = client.chat.completions.create(
-                model=modelo,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Você é um assistente especializado em contratos imobiliários com acesso a uma base de documentos. "
-                                   "Suas respostas devem ser:"
-                                   "\n1. DETALHADAS - Forneça informações completas e abrangentes sobre o que foi perguntado."
-                                   "\n2. ESPECÍFICAS - Quando a pergunta for sobre pessoas, entidades ou cláusulas, inclua TODOS os detalhes disponíveis nos documentos."
-                                   "\n3. ESTRUTURADAS - Organize a resposta de forma clara, usando listas ou seções quando apropriado."
-                                   "\n4. BASEADAS EM EVIDÊNCIAS - Cite explicitamente de qual documento/contrato a informação foi extraída."
-                                   "\n. Cite explicitamente codigos de barras, caso as informações sejam de boletos de cobrança."
-                    },
-                    {
-                        "role": "user",
-                        "content": f"Documentos:\n{context}\n\nPergunta: {request.question}"
-                    }
-                ],
-                temperature=0.5
+            prompt = (
+                "Você é um assistente especializado em contratos imobiliários com acesso a uma base de documentos. "
+                "Suas respostas devem ser:"
+                "\n1. DETALHADAS - Forneça informações completas e abrangentes sobre o que foi perguntado."
+                "\n2. ESPECÍFICAS - Quando a pergunta for sobre pessoas, entidades ou cláusulas, inclua TODOS os detalhes disponíveis nos documentos."
+                "\n3. ESTRUTURADAS - Organize a resposta de forma clara, usando listas ou seções quando apropriado."
+                "\n4. BASEADAS EM EVIDÊNCIAS - Cite explicitamente de qual documento/contrato a informação foi extraída."
+                "\n. Cite explicitamente códigos de barras, caso as informações sejam de boletos de cobrança."
+                f"\n\nDocumentos:\n{context}\n\nPergunta: {request.question}"
             )
+            chat = model.start_chat()
+            response = chat.send_message(prompt)
+
             
-            answer = resposta_final.choices[0].message.content
+            answer = response.text
         except Exception as e:
             print(f"[LLM] Erro ao gerar resposta: {str(e)}")
             raise HTTPException(status_code=500, detail="Erro ao gerar resposta. Tente novamente.")

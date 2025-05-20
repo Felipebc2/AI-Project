@@ -1,7 +1,7 @@
 import os
 import sys
 from dotenv import load_dotenv
-from openai import OpenAI
+from google import genai
 from pinecone import Pinecone
 import time
 from langchain_community.document_loaders import PyPDFLoader
@@ -37,9 +37,9 @@ if not GEMINI_API_KEY:
     sys.exit(1)
 
 def gerar_embedding(texto):
-    """Gera um embedding usando o modelo da OpenAI."""
+    """Gera um embedding usando o modelo da genai."""
     try:
-        client = OpenAI(api_key=GEMINI_API_KEY)
+        client = genai(api_key=GEMINI_API_KEY)
         response = client.embeddings.create(
             input=texto,
             model=EMBEDDING_MODEL

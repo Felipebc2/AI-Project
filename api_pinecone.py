@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from openai import OpenAI
+from google import genai
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List, Optional
@@ -20,9 +20,9 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_HOST = os.getenv("PINECONE_HOST")
 PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "brito-ai")
 
-# Configurações da OpenAI
+# Configurações da genai
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-openai_client = OpenAI(api_key=GEMINI_API_KEY)
+gemini_client = genai(api_key=GEMINI_API_KEY)
 EMBEDDING_MODEL = "text-embedding-3-small"
 
 # Variáveis globais para conexão com Pinecone
@@ -70,7 +70,7 @@ conexao_bem_sucedida = conectar_pinecone()
 # Função para gerar embeddings
 def gerar_embedding(texto):
     """
-    Gera um embedding usando o modelo da OpenAI.
+    Gera um embedding usando o modelo da genai.
     
     Args:
         texto: Texto para gerar o embedding
@@ -79,7 +79,7 @@ def gerar_embedding(texto):
         Lista com o embedding
     """
     try:
-        response = openai_client.embeddings.create(
+        response = gemini_client.embeddings.create(
             input=texto,
             model=EMBEDDING_MODEL
         )
@@ -227,7 +227,7 @@ def buscar_contratos(
     limit: int = Query(5, description="Número máximo de resultados")
 ):
     """
-    Realiza uma busca semântica nos contratos usando o Pinecone com embeddings da OpenAI.
+    Realiza uma busca semântica nos contratos usando o Pinecone com embeddings da genai.
     """
     global index
     
@@ -242,7 +242,7 @@ def buscar_contratos(
         )
     
     try:
-        # Gera o embedding da consulta usando o modelo da OpenAI
+        # Gera o embedding da consulta usando o modelo da genai
         query_embedding = gerar_embedding(q)
         
         # Realiza a busca vetorial no Pinecone

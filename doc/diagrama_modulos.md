@@ -24,19 +24,19 @@ graph TD
     api_upload -->|chama como processo| processar_contrato
     
     %% Dependências externas
-    openai["OpenAI API"]
+    genai["genai API"]
     pinecone["Pinecone API"]
     langchain["LangChain"]
     fastapi["FastAPI"]
     
     %% Conexões com dependências externas
     pinecone_utils -->|conecta com| pinecone
-    pinecone_utils -->|gera embeddings| openai
+    pinecone_utils -->|gera embeddings| genai
     
-    llm_router -->|gera respostas| openai
+    llm_router -->|gera respostas| genai
     
     processar_contrato -->|processa PDFs| langchain
-    processar_contrato -->|gera embeddings| openai
+    processar_contrato -->|gera embeddings| genai
     processar_contrato -->|armazena vetores| pinecone
     
     api_pinecone -->|framework web| fastapi
@@ -50,7 +50,7 @@ graph TD
     
     class api_pinecone,api_upload apiNode;
     class llm_router,shared,pinecone_utils,processar_contrato utilNode;
-    class openai,pinecone,langchain,fastapi externalNode;
+    class genai,pinecone,langchain,fastapi externalNode;
 ```
 
 ## Descrição das Relações entre Módulos
@@ -66,7 +66,7 @@ graph TD
 2. **llm_router.py**
    - Implementa o endpoint `/llm/ask` para perguntas em linguagem natural
    - Usa diretamente `buscar_documentos` de `pinecone_utils.py` para busca semântica
-   - Formata o contexto e gera respostas usando a API OpenAI
+   - Formata o contexto e gera respostas usando a API genai
 
 3. **shared.py**
    - Contém modelos de dados e funções compartilhadas
@@ -76,7 +76,7 @@ graph TD
 4. **pinecone_utils.py**
    - Fornece funções para interagir com o Pinecone
    - Implementa `buscar_documentos` para busca semântica
-   - Gerencia a geração de embeddings usando a API OpenAI
+   - Gerencia a geração de embeddings usando a API genai
 
 5. **processar_contrato.py**
    - Processa arquivos PDF de contratos
@@ -92,7 +92,7 @@ graph TD
 1. O usuário faz uma pergunta através do frontend ou API
 2. `llm_router.py` recebe a pergunta e chama `buscar_documentos` de `pinecone_utils.py`
 3. `pinecone_utils.py` gera embeddings da pergunta e consulta o Pinecone
-4. `llm_router.py` formata os resultados e gera uma resposta usando OpenAI
+4. `llm_router.py` formata os resultados e gera uma resposta usando genai
 5. A resposta é retornada ao usuário
 
 ### Processamento de Novos Contratos

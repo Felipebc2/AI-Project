@@ -1,6 +1,6 @@
 import os
 from pinecone import Pinecone
-from openai import OpenAI
+from google import genai
 from dotenv import load_dotenv
 import time
 
@@ -16,7 +16,7 @@ INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "brito-ai")
 
 # Configurações da GEMINI
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-openai_client = OpenAI(api_key=GEMINI_API_KEY)
+gemini_client = genai(api_key=GEMINI_API_KEY)
 EMBEDDING_MODEL = "text-embedding-3-small"
 
 def inicializar_pinecone():
@@ -46,7 +46,7 @@ def inicializar_pinecone():
 
 def gerar_embedding(texto):
     """
-    Gera um embedding usando o modelo da OpenAI.
+    Gera um embedding usando o modelo da genai.
     
     Args:
         texto: Texto para gerar o embedding
@@ -55,7 +55,7 @@ def gerar_embedding(texto):
         Lista com o embedding
     """
     try:
-        response = openai_client.embeddings.create(
+        response = gemini_client.embeddings.create(
             input=texto,
             model=EMBEDDING_MODEL
         )
@@ -78,7 +78,7 @@ def processar_e_indexar_documento(texto, metadata, id=None, index=None):
         ID do documento indexado
     """
     try:
-        # Gera o embedding usando o modelo da OpenAI
+        # Gera o embedding usando o modelo da genai
         embedding = gerar_embedding(texto)
         
         # Gera um ID se não fornecido
@@ -131,7 +131,7 @@ def buscar_documentos(query, top_k=5):
             query_processada = f"{query_processada} nome cpf rg identificação contratante locatário inquilino"
             print(f"Consulta sobre pessoa detectada, consulta enriquecida: '{query_processada[:50]}...'")
             
-        # Gera o embedding da consulta usando o modelo da OpenAI
+        # Gera o embedding da consulta usando o modelo da genai
         try:
             query_embedding = gerar_embedding(query_processada)
         except Exception as e:

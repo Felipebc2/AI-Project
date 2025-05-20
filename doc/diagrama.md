@@ -8,7 +8,7 @@ graph TD
     Processor[Processador de Contratos]
     PineconeAPI[API de Busca Semântica]
     PineconeUtils[Utilitários Pinecone]
-    OpenAI[OpenAI API]
+    genai[genai API]
     PineconeDB[(Pinecone DB)]
     Frontend[Frontend SvelteKit]
     
@@ -19,14 +19,14 @@ graph TD
     
     Processor -->|5. Carrega PDF| PDF
     Processor -->|6. Divide em chunks| Processor
-    Processor -->|7. Solicita embeddings| OpenAI
-    OpenAI -->|8. Retorna embeddings| Processor
+    Processor -->|7. Solicita embeddings| genai
+    genai -->|8. Retorna embeddings| Processor
     Processor -->|9. Armazena vetores| PineconeDB
     
     User -->|10. Faz consulta| Frontend
     Frontend -->|11. Envia consulta| PineconeAPI
-    PineconeAPI -->|12. Solicita embedding| OpenAI
-    OpenAI -->|13. Retorna embedding| PineconeAPI
+    PineconeAPI -->|12. Solicita embedding| genai
+    genai -->|13. Retorna embedding| PineconeAPI
     PineconeAPI -->|14. Busca vetores| PineconeDB
     PineconeDB -->|15. Retorna resultados| PineconeAPI
     PineconeAPI -->|16. Envia resultados| Frontend
@@ -42,7 +42,7 @@ graph TD
     class Processor,PineconeUtils processor
     class PineconeDB,PDF database
     class Frontend frontend
-    class OpenAI external
+    class genai external
 ```
 
 ## Arquivos do Sistema
@@ -61,14 +61,14 @@ graph TD
 3. O Processador de Contratos é acionado em segundo plano para:
    - Carregar o PDF e extrair o texto
    - Dividir o texto em chunks menores
-   - Gerar embeddings para cada chunk usando a OpenAI
+   - Gerar embeddings para cada chunk usando a genai
    - Armazenar os vetores e metadados no Pinecone
 
 ## Fluxo de Consulta Semântica
 
 1. O usuário faz uma consulta em linguagem natural através do frontend
 2. A API de Busca Semântica recebe a consulta e:
-   - Gera um embedding para a consulta usando a OpenAI
+   - Gera um embedding para a consulta usando a genai
    - Busca os vetores mais similares no Pinecone
    - Retorna os resultados ordenados por relevância
 3. O frontend exibe os resultados ao usuário

@@ -41,7 +41,7 @@ Para uma visão detalhada de como os módulos do backend se relacionam, consulte
 
 **Principais funcionalidades**:
 - Conexão com o Pinecone
-- Geração de embeddings usando OpenAI (modelo text-embedding-3-small)
+- Geração de embeddings usando genai (modelo text-embedding-3-small)
 - Indexação de documentos
 - Busca semântica de documentos
 - Listagem de documentos no índice
@@ -113,7 +113,7 @@ Este arquivo é importado por outros módulos e não precisa ser executado diret
 - Python 3.8+
 - Node.js 18+
 - Conta no Pinecone (https://www.pinecone.io/)
-- Chave de API da OpenAI (https://platform.openai.com/)
+- Chave de API da genai (https://platform.genai.com/)
 
 ## Configuração
 
@@ -124,7 +124,7 @@ Este arquivo é importado por outros módulos e não precisa ser executado diret
 pip install -r requirements.txt
 
 # Configurar variáveis de ambiente (.env)
-GEMINI_API_KEY=sua_chave_api_openai
+GEMINI_API_KEY=sua_chave_api_gemini
 PINECONE_API_KEY=sua_chave_api_pinecone
 PINECONE_HOST=seu_host_pinecone
 PINECONE_INDEX_NAME=brito-ai
@@ -143,7 +143,7 @@ uvicorn api_pinecone:app --host 127.0.0.1 --port 8000 --reload
 uvicorn api_upload:app --host 127.0.0.1 --port 8001 --reload
 ```
 
-**Nota importante:** O índice vetorial no Pinecone (`brito-ai`) deve ser criado manualmente através do painel de controle do Pinecone, usando o modelo `text-embedding-3-small` da OpenAI com dimensão 1536.
+**Nota importante:** O índice vetorial no Pinecone (`brito-ai`) deve ser criado manualmente através do painel de controle do Pinecone, usando o modelo `text-embedding-3-small` da genai com dimensão 1536.
 
 2. **Frontend**
 
@@ -233,8 +233,8 @@ O sistema utiliza o modelo configurado na variável de ambiente `GEMINI_MODEL` (
   - FastAPI
   - Uvicorn (servidor ASGI)
   - Pinecone (banco de dados vetorial)
-  - OpenAI Embeddings (modelo text-embedding-3-small)
-  - OpenAI Chat Completions (modelo gpt-4o-mini padrão)
+  - genai Embeddings (modelo text-embedding-3-small)
+  - genai Chat Completions (modelo gpt-4o-mini padrão)
   - LangChain (processamento de documentos)
   
 - **Frontend**:

@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
-from openai import OpenAI
+from google import genai
 import os
 import time
 from shared import buscar_contratos
 
 router = APIRouter()
-client = OpenAI(api_key=os.getenv("GEMINI_API_KEY"))
+client = genai(api_key=os.getenv("GEMINI_API_KEY"))
 
 class QuestionRequest(BaseModel):
     question: str

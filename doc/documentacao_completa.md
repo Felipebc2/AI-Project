@@ -66,7 +66,7 @@ O Contratus AI Imobiliária segue uma arquitetura moderna de microserviços, div
 1. **Backend:** Desenvolvido em Python com FastAPI, responsável pelo processamento de documentos, geração de embeddings, busca semântica e integração com modelos de linguagem.
 2. **Frontend:** Desenvolvido com SvelteKit, oferece uma interface intuitiva e responsiva para interação com o sistema.
 
-O sistema utiliza bancos de dados vetoriais (Pinecone) para armazenar e consultar representações semânticas dos documentos, além de APIs de inteligência artificial (OpenAI) para processamento de linguagem natural.
+O sistema utiliza bancos de dados vetoriais (Pinecone) para armazenar e consultar representações semânticas dos documentos, além de APIs de inteligência artificial (genai) para processamento de linguagem natural.
 
 ### 2.2 Diagrama de Arquitetura
 
@@ -94,19 +94,19 @@ graph TD
     api_upload -->|chama como processo| processar_contrato
     
     %% Dependências externas
-    openai["OpenAI API"]
+    genai["genai API"]
     pinecone["Pinecone API"]
     langchain["LangChain"]
     fastapi["FastAPI"]
     
     %% Conexões com dependências externas
     pinecone_utils -->|conecta com| pinecone
-    pinecone_utils -->|gera embeddings| openai
+    pinecone_utils -->|gera embeddings| genai
     
-    llm_router -->|gera respostas| openai
+    llm_router -->|gera respostas| genai
     
     processar_contrato -->|processa PDFs| langchain
-    processar_contrato -->|gera embeddings| openai
+    processar_contrato -->|gera embeddings| genai
     processar_contrato -->|armazena vetores| pinecone
     
     api_pinecone -->|framework web| fastapi
@@ -120,7 +120,7 @@ graph TD
     
     class api_pinecone,api_upload apiNode;
     class llm_router,shared,pinecone_utils,processar_contrato utilNode;
-    class openai,pinecone,langchain,fastapi externalNode;
+    class genai,pinecone,langchain,fastapi externalNode;
 ```
 
 **Legenda:**
@@ -189,7 +189,7 @@ Módulo que implementa o roteador para perguntas em linguagem natural:
 - Define o endpoint `/llm/ask`
 - Busca documentos relevantes usando `buscar_documentos` de `pinecone_utils.py`
 - Formata o contexto para o LLM
-- Gera respostas usando a API OpenAI
+- Gera respostas usando a API genai
 - Retorna a resposta e as fontes utilizadas
 
 **Melhorias Recentes:**
@@ -268,7 +268,7 @@ class QuestionResponse(BaseModel):
 
 Cada documento armazenado no Pinecone contém:
 
-- **Vetor:** Embedding gerado pelo modelo OpenAI
+- **Vetor:** Embedding gerado pelo modelo genai
 - **Metadados:**
   - `arquivo`: Nome do arquivo original
   - `texto`: Texto do chunk
@@ -277,7 +277,7 @@ Cada documento armazenado no Pinecone contém:
 
 ### 3.3 Integração com APIs Externas
 
-#### 3.3.1 OpenAI
+#### 3.3.1 genai
 
 - **Modelos Utilizados:**
   - `text-embedding-3-small`: Para geração de embeddings
@@ -412,7 +412,7 @@ sequenceDiagram
     participant ApiUpload as api_upload.py
     participant ProcessarContrato as processar_contrato.py
     participant PineconeUtils as pinecone_utils.py
-    participant OpenAI
+    participant genai
     participant Pinecone
 
     Usuario->>Frontend: Upload de contrato PDF
@@ -425,8 +425,8 @@ sequenceDiagram
     ProcessarContrato->>ProcessarContrato: Carrega PDF
     ProcessarContrato->>ProcessarContrato: Divide texto em chunks
     loop Para cada chunk
-        ProcessarContrato->>OpenAI: Gera embedding
-        OpenAI->>ProcessarContrato: Retorna embedding
+        ProcessarContrato->>genai: Gera embedding
+        genai->>ProcessarContrato: Retorna embedding
         ProcessarContrato->>PineconeUtils: Armazena chunk + embedding
         PineconeUtils->>Pinecone: Upsert vetor
         Pinecone->>PineconeUtils: Confirma armazenamento
@@ -446,13 +446,13 @@ sequenceDiagram
     participant Frontend
     participant ApiPinecone as api_pinecone.py
     participant PineconeUtils as pinecone_utils.py
-    participant OpenAI
+    participant genai
     participant Pinecone
 
     Usuario->>Frontend: Digita consulta
     Frontend->>ApiPinecone: GET /contratos/busca?q=consulta
-    ApiPinecone->>OpenAI: Gera embedding da consulta
-    OpenAI->>ApiPinecone: Retorna embedding
+    ApiPinecone->>genai: Gera embedding da consulta
+    genai->>ApiPinecone: Retorna embedding
     ApiPinecone->>Pinecone: Query com embedding
     Pinecone->>ApiPinecone: Retorna matches
     ApiPinecone->>Frontend: Retorna resultados formatados
@@ -467,20 +467,20 @@ sequenceDiagram
     participant Frontend
     participant LlmRouter as llm_router.py
     participant PineconeUtils as pinecone_utils.py
-    participant OpenAI
+    participant genai
     participant Pinecone
 
     Usuario->>Frontend: Faz pergunta
     Frontend->>LlmRouter: POST /llm/ask
     LlmRouter->>PineconeUtils: buscar_documentos(pergunta)
-    PineconeUtils->>OpenAI: Gera embedding da pergunta
-    OpenAI->>PineconeUtils: Retorna embedding
+    PineconeUtils->>genai: Gera embedding da pergunta
+    genai->>PineconeUtils: Retorna embedding
     PineconeUtils->>Pinecone: Query com embedding
     Pinecone->>PineconeUtils: Retorna documentos relevantes
     PineconeUtils->>LlmRouter: Retorna documentos
     LlmRouter->>LlmRouter: Formata contexto
-    LlmRouter->>OpenAI: Envia pergunta + contexto
-    OpenAI->>LlmRouter: Gera resposta
+    LlmRouter->>genai: Envia pergunta + contexto
+    genai->>LlmRouter: Gera resposta
     LlmRouter->>Frontend: Retorna resposta + fontes
     Frontend->>Usuario: Exibe resposta com citações
 ```
@@ -494,7 +494,7 @@ sequenceDiagram
 | Python | 3.11+ | Linguagem de programação principal |
 | FastAPI | 0.104.0+ | Framework web para APIs |
 | Uvicorn | 0.23.2+ | Servidor ASGI |
-| OpenAI | 1.0.0+ | API para embeddings e LLM |
+| genai | 1.0.0+ | API para embeddings e LLM |
 | Pinecone | 2.2.1+ | Banco de dados vetorial |
 | LangChain | 0.0.267+ | Processamento de documentos |
 | PyPDF2 | 3.0.1+ | Extração de texto de PDFs |
@@ -558,12 +558,12 @@ sequenceDiagram
 ### 7.3 Requisitos de Rede
 
 - **Portas:** 8000 (API), 5173 (Frontend Dev), 80/443 (Produção)
-- **Firewall:** Permitir conexões de saída para APIs da OpenAI e Pinecone
+- **Firewall:** Permitir conexões de saída para APIs da genai e Pinecone
 - **Latência:** <100ms para APIs externas (recomendado)
 
 ### 7.4 Requisitos de Serviços Externos
 
-- **Conta OpenAI:** API key com acesso aos modelos de embedding e LLM
+- **Conta genai:** API key com acesso aos modelos de embedding e LLM
 - **Conta Pinecone:** Índice configurado com dimensão 1536
 
 ## 8. Instalação e Configuração
@@ -574,7 +574,7 @@ Antes de iniciar a instalação, certifique-se de ter:
 
 1. Python 3.11+ instalado
 2. Node.js 18+ e npm instalados
-3. Conta na OpenAI com API key
+3. Conta na genai com API key
 4. Conta no Pinecone com índice criado
 5. Git instalado (opcional, para clonar o repositório)
 
@@ -585,8 +585,8 @@ Antes de iniciar a instalação, certifique-se de ter:
 Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 
 ```
-# OpenAI
-GEMINI_API_KEY=sua_chave_api_openai
+# genai
+GEMINI_API_KEY=sua_chave_api_gemini
 
 # Pinecone
 PINECONE_API_KEY=sua_chave_api_pinecone
@@ -747,7 +747,7 @@ curl -X POST "http://127.0.0.1:8000/upload" \
 
 - **Logs do Sistema:** Verificar regularmente os logs para identificar erros
 - **Uso de Recursos:** Monitorar uso de CPU, memória e armazenamento
-- **Disponibilidade de APIs:** Verificar regularmente a conectividade com OpenAI e Pinecone
+- **Disponibilidade de APIs:** Verificar regularmente a conectividade com genai e Pinecone
 
 ### 11.2 Backup
 
@@ -758,7 +758,7 @@ curl -X POST "http://127.0.0.1:8000/upload" \
 ### 11.3 Atualizações
 
 - **Dependências:** Atualizar regularmente as bibliotecas para versões mais recentes
-- **Modelos de IA:** Acompanhar lançamentos de novos modelos da OpenAI
+- **Modelos de IA:** Acompanhar lançamentos de novos modelos da genai
 - **Segurança:** Aplicar patches de segurança assim que disponíveis
 
 ### 11.4 Solução de Problemas Comuns
@@ -766,7 +766,7 @@ curl -X POST "http://127.0.0.1:8000/upload" \
 | Problema | Possível Causa | Solução |
 |----------|----------------|---------|
 | Erro de conexão com Pinecone | Chave API inválida ou problemas de rede | Verificar chave API e conectividade |
-| Erro na geração de embeddings | Chave OpenAI inválida ou limite excedido | Verificar chave API e limites de uso |
+| Erro na geração de embeddings | Chave genai inválida ou limite excedido | Verificar chave API e limites de uso |
 | Processamento de PDF falha | Formato de PDF não suportado | Converter para PDF padrão |
 | Respostas do LLM muito lentas | Modelo sobrecarregado ou conexão lenta | Aumentar timeout ou mudar para modelo menor |
 | Frontend não conecta ao backend | CORS ou servidor inativo | Verificar configurações de CORS e status do servidor |
@@ -825,14 +825,14 @@ curl -X POST "http://127.0.0.1:8000/upload" \
 **P: Quais são os requisitos mínimos para executar o sistema?**  
 R: Python 3.11+, Node.js 18+, 4GB de RAM e conexão com internet.
 
-**P: É possível usar outros modelos além dos da OpenAI?**  
+**P: É possível usar outros modelos além dos da genai?**  
 R: Sim, mas seria necessário modificar o código para suportar a API do novo provedor.
 
 **P: Como aumentar a precisão das buscas?**  
 R: Ajuste o parâmetro `top_k` nas funções de busca e experimente com diferentes modelos de embedding.
 
 **P: O sistema funciona offline?**  
-R: Não, é necessária conexão com internet para acessar as APIs da OpenAI e Pinecone.
+R: Não, é necessária conexão com internet para acessar as APIs da genai e Pinecone.
 
 **P: Como escalar o sistema para grandes volumes de documentos?**  
 R: Atualize para um plano Pinecone com maior capacidade e considere otimizações no processamento de documentos.
@@ -840,7 +840,7 @@ R: Atualize para um plano Pinecone com maior capacidade e considere otimizaçõe
 ### 14.2 Perguntas de Negócio
 
 **P: Qual o custo de operação do sistema?**  
-R: Os custos principais são as APIs da OpenAI e Pinecone, que variam conforme o volume de uso.
+R: Os custos principais são as APIs da genai e Pinecone, que variam conforme o volume de uso.
 
 **P: Quanto tempo leva para processar um novo contrato?**  
 R: Tipicamente de 30 segundos a 2 minutos, dependendo do tamanho do documento e da velocidade da conexão.
@@ -852,7 +852,7 @@ R: Sim, a arquitetura é flexível e pode ser adaptada para outros domínios com
 R: Busca semântica avançada, perguntas em linguagem natural, interface intuitiva e processamento automático de documentos.
 
 **P: Existe um limite de documentos que podem ser processados?**  
-R: O limite é determinado pelo plano do Pinecone e pelos custos da API da OpenAI.
+R: O limite é determinado pelo plano do Pinecone e pelos custos da API da genai.
 
 ---
 

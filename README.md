@@ -301,3 +301,4 @@ Para produção, remova a flag `--reload` e considere usar `--host 0.0.0.0` se p
 - **Atualização da documentação**: Melhorada a documentação com instruções detalhadas para inicialização e uso do sistema.
 # IA_Project
 "# IA_Project" 
+# AI-Project

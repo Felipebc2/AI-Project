@@ -1,7 +1,7 @@
 import os
 import sys
 from dotenv import load_dotenv
-from google import genai
+import google.generativeai as genai
 from pinecone import Pinecone
 import time
 from langchain_community.document_loaders import PyPDFLoader

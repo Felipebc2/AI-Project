@@ -10,6 +10,7 @@ pydantic==2.11.3
 sentence-transformers==4.1.0
 python-multipart==0.0.20
 pinecone-client==6.0.0
+pinecone==6.0.2
 pdfplumber==0.11.5
 google-generativeai==0.3.2
 google==3.0.0

@@ -1,6 +1,6 @@
 import os
 from pinecone import Pinecone
-from google import genai
+import google.generativeai as genai
 from dotenv import load_dotenv
 import time
 
@@ -14,10 +14,13 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_HOST = os.getenv("PINECONE_HOST")
 INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "brito-ai")
 
-# Configurações da GEMINI
+
+# Configuração da API do Gemini
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-gemini_client = genai(api_key=GEMINI_API_KEY)
-EMBEDDING_MODEL = "text-embedding-3-small"
+genai.configure(api_key=GEMINI_API_KEY)
+
+# Inicializa o modelo de embedding do Gemini
+embedding_model = genai.GenerativeModel(model_name="models/embedding-001")
 
 def inicializar_pinecone():
     """Inicializa a conexão com o Pinecone e retorna o índice."""
@@ -45,21 +48,15 @@ def inicializar_pinecone():
         raise
 
 def gerar_embedding(texto):
-    """
-    Gera um embedding usando o modelo da genai.
-    
-    Args:
-        texto: Texto para gerar o embedding
-        
-    Returns:
-        Lista com o embedding
-    """
+    """Gera um embedding usando o modelo do Gemini."""
     try:
-        response = gemini_client.embeddings.create(
-            input=texto,
-            model=EMBEDDING_MODEL
+        # Changed: Use genai.embed_content for Gemini embeddings
+        response = genai.embed_content(
+            model="models/embedding-001",
+            content=texto,
+            task_type="RETRIEVAL_DOCUMENT" # Recommended task type for document embedding
         )
-        return response.data[0].embedding
+        return response['embedding'] # Changed: Access the embedding from the response
     except Exception as e:
         print(f"Erro ao gerar embedding: {e}")
         raise

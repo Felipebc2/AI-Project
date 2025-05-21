@@ -7,7 +7,7 @@ from typing import List
 import uvicorn
 from pinecone import Pinecone
 import google.generativeai as genai
-
+from llm_router import router as llm
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 
@@ -78,7 +78,11 @@ def gerar_embedding(texto):
 
 app = FastAPI(title="Contratus AI API", 
               description="API para consulta semântica de contratos usando Pinecone",
-              version="2.0.0")
+              version="2.0.0",
+              debug=True
+              )
+
+app.include_router(llm,prefix="/llm")
 
 # Configuração de CORS
 app.add_middleware(

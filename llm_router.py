@@ -1,19 +1,14 @@
+# llm_router.py
+import os
+import time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
-from google import genai
-import os
-import time
-from shared import buscar_contratos
+import google.generativeai as genai
 
 router = APIRouter()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel(
-    model_name=os.getenv("GEMINI_MODEL"),
-    generation_config=genai.types.GenerationConfig(
-        temperature=0.5
-    )
-)
+
+# ─── Models & Schemas ──────────────────────────────────────────────────────────
 
 class QuestionRequest(BaseModel):
     question: str
@@ -23,84 +18,80 @@ class QuestionResponse(BaseModel):
     answer: str
     sources: List[dict]
 
+# ─── Lazy Gemini Setup ─────────────────────────────────────────────────────────
+
+_genai_configured = False
+def _ensure_gemini():
+    global _genai_configured
+    if not _genai_configured:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY not set")
+        genai.configure(api_key=api_key)
+        _genai_configured = True
+
+def _get_model():
+    _ensure_gemini()
+    model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    return genai.GenerativeModel(
+        model_name=model_name,
+        generation_config=genai.types.GenerationConfig(temperature=0.5)
+    )
+
+# ─── Route ────────────────────────────────────────────────────────────────────
+
 @router.post("/ask", response_model=QuestionResponse)
 async def ask_question(request: QuestionRequest):
-    """Responde a perguntas sobre contratos usando o LLM com base nos resultados da busca semântica."""
     start_time = time.time()
-    
+    question = request.question.strip()
+    if not question:
+        raise HTTPException(400, "A pergunta não pode estar vazia")
+
+    print(f"[LLM] Pergunta: '{question}' (max={request.max_results})")
+
+    # ─── Lazy-import Pinecone search ──────────────────────────────────────────
     try:
-        # Validação básica da pergunta
-        if not request.question or not request.question.strip():
-            raise HTTPException(status_code=400, detail="A pergunta não pode estar vazia")
-            
-        print(f"[LLM] Recebida pergunta: '{request.question}' (max_results={request.max_results})")
-        
-        # 1. Busca direta no Pinecone usando a função buscar_documentos
-        # IMPORTANTE: Contornando a função buscar_contratos para evitar incompatibilidade de formatos
         from pinecone_utils import buscar_documentos
-        
-        print(f"[LLM] Realizando busca semântica direta...")
-        try:
-            # Busca direta nos documentos
-            documentos = buscar_documentos(request.question, request.max_results)
-            
-            # Verifica se há resultados
-            if not documentos or len(documentos) == 0:
-                print(f"[LLM] Nenhum documento relevante encontrado.")
-                raise HTTPException(status_code=404, detail="Nenhum documento relevante encontrado.")
-            
-            print(f"[LLM] Encontrados {len(documentos)} documentos relevantes.")
-        except Exception as e:
-            print(f"[LLM] Erro na busca: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Erro ao processar a consulta: {str(e)}")
-        
-        # 3. Prepara contexto para o LLM diretamente dos documentos encontrados
-        context = "\n\n".join(
-            f"[Documento {i+1} - {doc['arquivo']}]\n{doc['texto']}"
-            for i, doc in enumerate(documentos)
-        )
+    except ImportError as e:
+        raise HTTPException(500, f"Erro interno: {e}")
 
-        # 4. Geração da resposta com o LLM
-        modelo = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-        print(f"[LLM] Gerando resposta com o modelo {modelo}...")
-        
-        try:
-            prompt = (
-                "Você é um assistente especializado em contratos imobiliários com acesso a uma base de documentos. "
-                "Suas respostas devem ser:"
-                "\n1. DETALHADAS - Forneça informações completas e abrangentes sobre o que foi perguntado."
-                "\n2. ESPECÍFICAS - Quando a pergunta for sobre pessoas, entidades ou cláusulas, inclua TODOS os detalhes disponíveis nos documentos."
-                "\n3. ESTRUTURADAS - Organize a resposta de forma clara, usando listas ou seções quando apropriado."
-                "\n4. BASEADAS EM EVIDÊNCIAS - Cite explicitamente de qual documento/contrato a informação foi extraída."
-                "\n. Cite explicitamente códigos de barras, caso as informações sejam de boletos de cobrança."
-                f"\n\nDocumentos:\n{context}\n\nPergunta: {request.question}"
-            )
-            chat = model.start_chat()
-            response = chat.send_message(prompt)
-
-            
-            answer = response.text
-        except Exception as e:
-            print(f"[LLM] Erro ao gerar resposta: {str(e)}")
-            raise HTTPException(status_code=500, detail="Erro ao gerar resposta. Tente novamente.")
-
-        # 5. Prepara e retorna a resposta diretamente dos documentos
-        response = {
-            "answer": answer,
-            "sources": [{
-                "filename": doc["arquivo"],
-                "text": doc["texto"]
-            } for doc in documentos]
-        }
-        
-        elapsed_time = time.time() - start_time
-        print(f"[LLM] Resposta gerada em {elapsed_time:.2f} segundos.")
-        
-        return response
-        
-    except HTTPException as e:
-        # Repassa exceções HTTP
-        raise
+    try:
+        documentos = buscar_documentos(question, request.max_results)
     except Exception as e:
-        print(f"[LLM] Erro ao processar pergunta: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Erro ao processar pergunta: {str(e)}")
+        print(f"[LLM] Erro na busca semântica: {e}")
+        raise HTTPException(500, "Erro ao buscar documentos.")
+
+    if not documentos:
+        raise HTTPException(404, "Nenhum documento relevante encontrado.")
+
+    # ─── Build prompt ─────────────────────────────────────────────────────────
+    context = "\n\n".join(
+        f"[Doc {i+1} - {doc['arquivo']}]\n{doc['texto']}"
+        for i, doc in enumerate(documentos)
+    )
+
+    prompt = (
+        "Você é um assistente especializado em contratos imobiliários.\n"
+        "Responda de forma:\n"
+        "1. DETALHADA\n2. ESPECÍFICA\n"
+        "3. ESTRUTURADA\n4. BASEADA EM EVIDÊNCIAS\n\n"
+        f"Documentos:\n{context}\n\nPergunta: {question}"
+    )
+
+    # ─── Call Gemini ──────────────────────────────────────────────────────────
+    try:
+        model = _get_model()
+        chat = model.start_chat()
+        response = chat.send_message(prompt)
+        answer = response.text
+    except Exception as e:
+        print(f"[LLM] Erro ao gerar resposta: {e}")
+        raise HTTPException(500, f"Erro ao gerar resposta. {e}")
+
+    elapsed = time.time() - start_time
+    print(f"[LLM] Resposta em {elapsed:.2f}s.")
+
+    return QuestionResponse(
+        answer=answer,
+        sources=[{"filename": d["arquivo"], "text": d["texto"]} for d in documentos]
+    )
